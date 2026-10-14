@@ -37,8 +37,30 @@ pub fn window(title: &str) -> Window {
     }
 }
 
+#[link(name = "AVFAudio", kind = "framework")]
+extern "C" {}
+
+/// The game's sound plays as media: the Playback category of the shared `AVAudioSession`. cpal (under bevy_audio)
+/// leaves the session alone, and the default category (SoloAmbient) is muted by the Ring / Silent switch.
+fn audio_session() {
+    use objc2::msg_send;
+    use objc2::runtime::{AnyClass, AnyObject, Bool};
+    use objc2_foundation::NSString;
+    let Some(class) = AnyClass::get(c"AVAudioSession") else { return };
+    let mut error: *mut AnyObject = std::ptr::null_mut();
+    unsafe {
+        let session: *mut AnyObject = msg_send![class, sharedInstance];
+        if session.is_null() { return; }
+        let category = NSString::from_str("AVAudioSessionCategoryPlayback");
+        let ok: Bool = msg_send![session, setCategory: &*category, error: &mut error];
+        let active: Bool = msg_send![session, setActive: Bool::YES, error: &mut error];
+        if !ok.as_bool() || !active.as_bool() { eprintln!("audio: the AVAudioSession Playback category was refused"); }
+    }
+}
+
 /// Sets the iOS defaults, then returns when the game data is ready; otherwise runs the setup app (never returns).
 pub fn startup() {
+    audio_session();
     let data = data_dir();
     let set_default = |k: &str, v: &std::ffi::OsStr| {
         if std::env::var_os(k).is_none_or(|x| x.is_empty()) {
