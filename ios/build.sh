@@ -22,6 +22,12 @@ case "$kind" in
 esac
 
 command -v xcrun >/dev/null || { echo "error: needs macOS with Xcode (xcrun not found)" >&2; exit 1; }
+[ -x "$HOME/.cargo/bin/rustup" ] && export PATH="$HOME/.cargo/bin:$PATH"
+command -v rustup >/dev/null || {
+  echo "error: Rust no está instalado. Instálalo con:  curl https://sh.rustup.rs -sSf | sh -s -- -y" >&2
+  echo "       y abre una terminal nueva (Rust is not installed; see the command above)." >&2
+  exit 1
+}
 rustup target add "$target" >/dev/null
 
 export IPHONEOS_DEPLOYMENT_TARGET=16.0

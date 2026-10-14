@@ -1,0 +1,5 @@
+# Your own disc image and build output: never committed.
+*.iso
+*.ISO
+/out/
+.DS_Store
